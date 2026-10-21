@@ -1,6 +1,6 @@
 # 交付验证记录
 
-日期：2026-10-21。环境：Windows，Node.js v24.19.0。
+初始验证：2026-10-21；发布复核：2026-10-22。环境：Windows，Node.js v24.19.0。
 
 ## 已完成
 
@@ -12,11 +12,13 @@
 - CSV 内容、工程 JSON 往返、无效导入、回放进度与界面状态完成离线逻辑测试。
 - 默认方形示例可生成轨迹；盲区反例被拒绝。
 - 打包时检查本地引用、示例格式及 ZIP 内的隐藏配置文件。
+- 源码已发布至公开仓库 [fcship625/armpath-lite](https://github.com/fcship625/armpath-lite)，GitHub 已识别 MIT 许可证。
+- GitHub Actions 的 Node.js 22 / 24 测试均通过：[首次远程验证记录](https://github.com/fcship625/armpath-lite/actions/runs/39663348748)。
 
 ## 尚未验证
 
 浏览器权限检查未允许访问本地预览地址，因此没有完成真实浏览器的截图、响应式布局、文件下载交互与触摸操作验证。DOM 替身测试只覆盖事件逻辑，不能替代浏览器验证。
 
-GitHub Actions 配置已提供，尚未在远程仓库执行。没有向 GitHub 推送代码，也未部署 GitHub Pages。
+GitHub Pages 尚未启用。当前可下载源码后直接打开 `index.html` 使用。
 
-首次发布前，建议双击 `index.html`，手动体验目标拖动、修改参数、盲区反例、回放、CSV 下载及 JSON 保存 / 打开，再使用窄窗口确认布局。
+使用前，建议双击 `index.html`，手动体验目标拖动、修改参数、盲区反例、回放、CSV 下载及 JSON 保存 / 打开，再使用窄窗口确认布局。

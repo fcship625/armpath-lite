@@ -1,5 +1,9 @@
 # ArmPath Lite
 
+[![Kinematics tests](https://github.com/fcship625/armpath-lite/actions/workflows/test.yml/badge.svg)](https://github.com/fcship625/armpath-lite/actions/workflows/test.yml)
+
+项目仓库：[fcship625/armpath-lite](https://github.com/fcship625/armpath-lite)
+
 **让路径先走一遍。** 一个不需要安装依赖的二维机械臂运动学与路径检查小工具。
 
 A small, offline-first planar 2R robot arm playground. Check the **entire straight segment**, explore both IK branches, and export a sampled joint trajectory as CSV.

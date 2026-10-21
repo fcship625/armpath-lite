@@ -2,7 +2,7 @@
 
 这个项目已经带有 README、MIT LICENSE、示例、测试与自动测试配置。仓库名建议使用 `armpath-lite`；署名为 **ArmPath Lite contributors**。
 
-本指南中的发布操作需要在你自己的 GitHub 账户下执行；本地交付文件不代表仓库已发布。
+项目已发布至 [fcship625/armpath-lite](https://github.com/fcship625/armpath-lite)。以下步骤可用于后续迁移，或在其他账户下自行发布；GitHub Pages 为可选的单独部署步骤。
 
 ## 方法一：通过网页上传
 
