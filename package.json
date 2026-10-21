@@ -1,0 +1,10 @@
+{
+  "name": "armpath-lite",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A dependency-free planar 2R robot arm path checker and kinematics playground.",
+  "license": "MIT",
+  "author": "ArmPath Lite contributors",
+  "scripts": { "test": "node tests/run.cjs", "start": "node scripts/serve.cjs" },
+  "engines": { "node": ">=22" }
+}

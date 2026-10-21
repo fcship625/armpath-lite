@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ArmPath Lite：离线可用的二维机械臂运动学与路径检查工具，支持逆运动学、盲区检查和 CSV 导出。">
+  <meta name="theme-color" content="#20624e">
+  <title>ArmPath Lite · 二维机械臂路径实验室</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2320624e'/%3E%3Cpath d='M7 25L13 11L25 17' fill='none' stroke='%23fff' stroke-width='4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="src/kinematics.js"></script>
+  <script defer src="src/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="ArmPath Lite 首页"><span class="brand-icon" aria-hidden="true">⌁</span> ArmPath <span class="brand-lite">LITE</span></a>
+    <nav aria-label="项目导航"><span class="offline"><i></i> 本地计算 · 无需联网</span><a href="README.md">项目说明 ↗</a><a href="LICENSE">MIT 开源 ↗</a></nav>
+  </header>
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">ROBOTICS / PLANAR 2R</p><h1>让路径先走一遍<span>。</span></h1><p class="subtitle">拖动目标，探索机械臂姿态，把可达的路径带走。</p></div>
+      <div class="intro-tag"><span class="tag-dot"></span><div>二维机械臂路径实验室<small>ArmPath Lite · v1.0</small></div></div>
+    </section>
+    <div class="workbench">
+      <section class="stage-card" aria-label="机械臂工作区">
+        <div class="panel-heading"><div><span class="eyebrow">01 / WORKSPACE</span><h2>工作空间</h2></div><span id="reach-badge" class="badge">目标可达</span></div>
+        <div class="stage-wrap">
+          <svg id="stage" role="img" aria-label="二维机械臂示意图，点击或拖动选择目标；也可使用右侧坐标输入" viewBox="-300 -300 600 600"></svg>
+          <div class="canvas-hint"><span class="pointer-symbol">↖</span> 点击 / 拖动设置目标 <span>·</span> 坐标单位 mm</div>
+          <div class="axis-note">+Y ↑<br>+X →</div>
+        </div>
+        <div class="readouts">
+          <div><span>肩关节 θ₁</span><strong id="q1">—</strong></div>
+          <div><span>肘关节 θ₂</span><strong id="q2">—</strong></div>
+          <div><span>奇异性指标 <button class="info" type="button" title="|sin θ₂|：0 表示奇异位形，1 表示该指标最大。它不是安全评分。" aria-label="奇异性指标解释">i</button></span><strong id="index-value">—</strong></div>
+        </div>
+      </section>
+      <aside class="controls" aria-label="机械臂参数">
+        <section class="control-card"><div class="section-title"><h2>机械臂参数</h2><span>2 DOF</span></div>
+          <div class="field-heading"><label for="l1">连杆 L₁</label><output id="l1-value" for="l1">140 mm</output></div>
+          <input id="l1" type="range" min="20" max="300" value="140" step="1">
+          <div class="field-heading"><label for="l2">连杆 L₂</label><output id="l2-value" for="l2">100 mm</output></div>
+          <input id="l2" type="range" min="20" max="300" value="100" step="1">
+          <label class="field-label" for="branch">逆解分支</label><select id="branch"><option value="1">正肘角 · θ₂ ≥ 0</option><option value="-1">负肘角 · θ₂ ≤ 0</option></select>
+          <p id="workspace-range" class="field-note">可达半径 40–240 mm</p>
+        </section>
+        <section class="control-card"><div class="section-title"><h2>末端目标</h2><span>X / Y</span></div>
+          <div class="two-fields"><label>X <span>mm</span><input id="target-x" type="number" min="-650" max="650" step="any" value="145"></label><label>Y <span>mm</span><input id="target-y" type="number" min="-650" max="650" step="any" value="95"></label></div>
+          <p id="target-note" class="field-note">当前目标可达，可添加为路点。</p>
+          <button id="add-point" class="button secondary full" type="button">＋ 添加当前目标为路点</button>
+        </section>
+        <section class="control-card"><div class="section-title"><h2>采样设置</h2><span>CSV</span></div>
+          <div class="two-fields"><label for="speed">末端速度 <span>mm/s</span><input id="speed" type="number" min="1" max="300" step="any" value="60"></label><label for="step">最大步长 <span>mm</span><input id="step" type="number" min="0.5" max="20" step="any" value="2"></label></div>
+          <p class="field-note">分段直线匀速采样；拐角不做平滑处理。</p>
+        </section>
+        <div class="scope-note"><span aria-hidden="true">◇</span><p>用于几何学习与路径预检查。未建模关节限位、碰撞或动力学。</p></div>
+      </aside>
+      <section class="path-card" aria-label="路径规划">
+        <div class="path-heading"><div><span class="eyebrow">02 / PATH CHECK</span><h2>从路点，到轨迹</h2></div><div class="preset-actions"><button id="demo" class="text-button" type="button">载入圆形示例</button><button id="hole-demo" class="text-button" type="button">试试盲区反例 ↗</button></div></div>
+        <div class="route-summary"><div><strong id="point-count">5</strong><span>路点</span></div><div><strong id="path-length">—</strong><span>路径长度 / mm</span></div><div><strong id="duration">—</strong><span>预览时长 / s</span></div><div><strong id="sample-count">—</strong><span>采样点</span></div></div>
+        <div id="path-status" class="path-status" role="status" aria-live="polite"></div>
+        <ol id="waypoints" class="waypoints" aria-label="路点列表"></ol>
+        <div class="route-tools"><div><button id="undo" type="button" class="text-button">撤销路点</button><button id="clear" type="button" class="text-button">清空</button></div><div><button id="save-project" type="button" class="text-button">保存工程</button><button id="load-project" type="button" class="text-button">打开工程</button><input type="file" id="project-file" accept=".json,application/json" hidden></div></div>
+        <div class="playback"><button id="play" class="button secondary" type="button">▶ 回放轨迹</button><label for="scrub" class="sr-only">轨迹回放进度</label><input id="scrub" type="range" min="0" max="1000" value="0" step="1"><output id="play-time">0.00 s</output><button id="export" class="button primary" type="button">导出 CSV ↓</button></div>
+        <p class="footnote">橙色虚线表示不可达段。检查覆盖整条线段，不只检查采样点；回放从第一个路点开始。</p>
+      </section>
+    </div>
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+  </main>
+  <footer><span>ArmPath Lite <b>·</b> Small tools for curious roboticists.</span><span>Vanilla JavaScript / MIT / 2026</span></footer>
+</body>
+</html>

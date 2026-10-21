@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "l1": 140,
+  "l2": 100,
+  "branch": 1,
+  "speed": 60,
+  "step": 2,
+  "target": { "x": -140, "y": 0 },
+  "waypoints": [{ "x": -140, "y": 0 }, { "x": 140, "y": 0 }]
+}
