@@ -5,7 +5,7 @@
   const initial = () => ({ schemaVersion: 1, l1: 140, l2: 100, branch: 1, speed: 60, step: 2,
     target: { x: 145, y: 95 }, waypoints: [{ x: 100, y: 45 }, { x: 170, y: 45 }, { x: 170, y: 115 }, { x: 100, y: 115 }, { x: 100, y: 45 }] });
   let state = initial(), result = null, playing = false, frame = 0, playbackTime = 0, previousFrame = null, dragging = false;
-  let noticeTimer;
+  let noticeTimer, importGeneration = 0;
   const fmt = (v, n = 1) => Number(v).toFixed(n);
   const reasonText = { inside: '穿过内侧不可达盲区', outside: '超出最大可达半径', origin: '穿过等长机械臂的原点，逆解不唯一' };
   function notice(text) {
@@ -21,7 +21,7 @@
     targetToInputs();
   }
   function targetToInputs() {
-    $('target-x').value = fmt(state.target.x); $('target-y').value = fmt(state.target.y);
+    $('target-x').value = String(state.target.x); $('target-y').value = String(state.target.y);
   }
   function draw() {
     const { l1, l2, target, waypoints } = state, outer = l1 + l2, inner = Math.abs(l1 - l2);
@@ -178,12 +178,15 @@
   $('load-project').addEventListener('click', () => $('project-file').click());
   $('project-file').addEventListener('change', async e => {
     const file = e.target.files[0]; if (!file) return;
+    const generation = ++importGeneration;
     try {
       if (file.size > 256000) throw new Error('工程文件过大，最大为 250 KB。');
-      const clean = K.validateProject(JSON.parse(await file.text()));
+      const raw = await file.text();
+      if (generation !== importGeneration) return;
+      const clean = K.validateProject(JSON.parse(raw));
       stop(); state = clean; configToInputs(); replan(); notice('工程已载入。');
-    } catch (error) { notice('打开失败：' + error.message); }
-    finally { e.target.value = ''; }
+    } catch (error) { if (generation === importGeneration) notice('打开失败：' + error.message); }
+    finally { if (generation === importGeneration) e.target.value = ''; }
   });
   configToInputs(); replan();
 })();

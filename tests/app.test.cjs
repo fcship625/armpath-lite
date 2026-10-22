@@ -75,7 +75,7 @@ test('pointer target coordinates have +Y up and equivalent text controls', async
   const { $ } = launch();
   await $('stage').emit('pointerdown', { button: 0, pointerId: 1, clientX: 120, clientY: -80 });
   await $('stage').emit('pointerup');
-  assert.equal($('target-x').value, '120.0'); assert.equal($('target-y').value, '80.0');
+  assert.equal(Number($('target-x').value), 120); assert.equal(Number($('target-y').value), 80);
   assert.equal($('add-point').disabled, false);
 });
 test('playback, scrubbing, pause and visibility changes work', async () => {
@@ -86,7 +86,7 @@ test('playback, scrubbing, pause and visibility changes work', async () => {
   document.hidden = true; await document.emit('visibilitychange');
   assert.equal($('play').textContent, '▶ 回放轨迹');
   $('scrub').value = '1000'; await $('scrub').emit('input');
-  assert.equal($('target-x').value, '100.0'); assert.equal($('target-y').value, '45.0');
+  assert.equal(Number($('target-x').value), 100); assert.equal(Number($('target-y').value), 45);
   await $('play').emit('click'); frame(2000);
   assert.equal($('play-time').textContent, '0.00 s');
 });
@@ -109,6 +109,56 @@ test('malformed and oversized imports leave the existing project intact', async 
     $('project-file').files = [file]; await $('project-file').emit('change');
     assert.equal($('point-count').textContent, 5); assert.match($('notice').textContent, /打开失败/);
   }
+});
+test('the most recently selected project wins when earlier reads finish late', async () => {
+  const { $ } = launch();
+  const base = JSON.parse(fs.readFileSync(path.join(root, 'examples/square.json'), 'utf8'));
+  let finishOlder;
+  const olderRead = new Promise(resolve => { finishOlder = resolve; });
+  $('project-file').files = [{ size: 1000, text: () => olderRead }];
+  const olderImport = $('project-file').emit('change');
+  $('project-file').files = [{ size: 1000, text: async () => JSON.stringify({ ...base, l1: 160 }) }];
+  await $('project-file').emit('change');
+  assert.equal(Number($('l1').value), 160);
+  finishOlder(JSON.stringify({ ...base, l1: 180 }));
+  await olderImport;
+  assert.equal(Number($('l1').value), 160);
+  assert.equal($('notice').textContent, '工程已载入。');
+});
+test('an obsolete read failure cannot reset the newer input or replace its notice', async () => {
+  const { $ } = launch();
+  const base = JSON.parse(fs.readFileSync(path.join(root, 'examples/square.json'), 'utf8'));
+  let failOlder, finishNewer;
+  const olderRead = new Promise((resolve, reject) => { failOlder = reject; });
+  const newerRead = new Promise(resolve => { finishNewer = resolve; });
+  $('project-file').files = [{ size: 1000, text: () => olderRead }];
+  const olderImport = $('project-file').emit('change');
+  $('project-file').files = [{ size: 1000, text: () => newerRead }];
+  $('project-file').value = 'newer-project.json';
+  const newerImport = $('project-file').emit('change');
+  failOlder(new Error('Obsolete read failed'));
+  await olderImport;
+  assert.equal($('project-file').value, 'newer-project.json');
+  assert.doesNotMatch($('notice').textContent, /打开失败/);
+  finishNewer(JSON.stringify({ ...base, l1: 160 }));
+  await newerImport;
+  assert.equal(Number($('l1').value), 160);
+  assert.equal($('project-file').value, '');
+  assert.equal($('notice').textContent, '工程已载入。');
+});
+test('precise imported targets survive numeric inputs, waypoint creation and saving', async () => {
+  const { $, downloads } = launch();
+  const project = JSON.parse(fs.readFileSync(path.join(root, 'examples/coarse-step.json'), 'utf8'));
+  project.target = { x: -0.12345678901234567, y: -0.010000000000000002 };
+  $('project-file').files = [{ size: 1000, text: async () => JSON.stringify(project) }];
+  await $('project-file').emit('change');
+  assert.equal(Number($('target-x').value), project.target.x);
+  assert.equal(Number($('target-y').value), project.target.y);
+  await $('add-point').emit('click');
+  await $('save-project').emit('click');
+  const saved = JSON.parse(await downloads[0].blob.text());
+  assert.deepEqual(saved.target, project.target);
+  assert.deepEqual(saved.waypoints.at(-1), project.target);
 });
 test('parameter changes replan and branch changes reverse the elbow angle', async () => {
   const { $ } = launch();
