@@ -70,6 +70,31 @@ test('shoulder angles stay continuous across the atan2 branch cut', () => {
   assert.ok(p.valid);
   for (let i = 1; i < p.samples.length; i++) assert.ok(Math.abs(p.samples[i].q1 - p.samples[i - 1].q1) < 0.1);
 });
+test('coarse sampling preserves genuine shoulder turns greater than 180 degrees', () => {
+  for (const branch of [1, -1]) {
+    const options = { l1: 20, l2: 20, branch, speed: 60,
+      waypoints: [{ x: -0.1, y: -branch * 0.01 }, { x: 19.8, y: -branch * 0.01 }] };
+    const coarse = K.plan({ ...options, step: 20 });
+    const fine = K.plan({ ...options, step: 0.01 });
+    assert.ok(coarse.valid && fine.valid); assert.equal(coarse.samples.length, 2);
+    assert.ok(Math.abs(fine.samples.at(-1).q1 - fine.samples[0].q1) > Math.PI);
+    near(coarse.samples.at(-1).q1, fine.samples.at(-1).q1);
+    const last = coarse.samples.at(-1), fk = K.forward(20, 20, last.q1, last.q2);
+    near(last.x, fk.tip.x); near(last.y, fk.tip.y);
+    const finalRow = K.toCSV(coarse, { ...options, step: 20 }).trim().split('\r\n').at(-1).split(',');
+    near(Number(finalRow[3]), K.degrees(fine.samples.at(-1).q1), 1e-6);
+  }
+});
+test('continuous shoulder angles retain three complete path windings', () => {
+  for (const branch of [1, -1]) {
+    const waypoints = Array.from({ length: 73 }, (_, i) => ({
+      x: 120 * Math.cos(i * Math.PI / 12), y: 120 * Math.sin(i * Math.PI / 12)
+    }));
+    const p = K.plan({ ...settings, branch, step: 20, waypoints });
+    assert.ok(p.valid);
+    near(p.samples.at(-1).q1 - p.samples[0].q1, 6 * Math.PI);
+  }
+});
 test('duplicate waypoints create no duplicate timestamps', () => {
   const p = K.plan({ ...settings, waypoints: [{ x: 100, y: 50 }, { x: 100, y: 50 }] });
   assert.ok(p.valid); assert.equal(p.samples.length, 1); near(p.duration, 0);

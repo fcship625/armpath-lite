@@ -77,10 +77,17 @@
     const estimated = 1 + segments.reduce((n, s) => n + (s.length === 0 ? 0 : Math.ceil(s.length / step)), 0);
     if (estimated > 50000) throw new RangeError('采样超过 50,000 点，请增大采样步长。');
     const samples = [];
+    let previousDirection;
     function append(p, distance) {
       const ik = inverse(l1, l2, p.x, p.y, branch);
       if (!ik.reachable || ik.ambiguous) throw new Error('路径包含无法稳定求解的点。');
-      const q1 = samples.length ? unwrap(ik.q1, samples[samples.length - 1].q1) : ik.q1;
+      // Along a valid straight segment the polar direction changes by less than
+      // pi, but the shoulder can legitimately turn farther near a singularity.
+      // Unwrap the direction, then retain the IK shoulder offset exactly.
+      const rawDirection = Math.atan2(p.y, p.x);
+      const direction = samples.length ? unwrap(rawDirection, previousDirection) : rawDirection;
+      const q1 = ik.q1 + (direction - rawDirection);
+      previousDirection = direction;
       samples.push({ t: distance / speed, x: p.x, y: p.y, q1, q2: ik.q2, index: ik.index });
     }
     append(waypoints[0], 0);

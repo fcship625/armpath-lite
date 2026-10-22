@@ -4,7 +4,7 @@
 
 ## 已完成
 
-- `node tests/run.cjs`：v1.0.0 初始 20 项通过；v1.0.1 维护复核为 23 项通过、0 失败，增加了真实 HTTP 请求覆盖。
+- `node tests/run.cjs`：v1.0.0 初始 20 项通过；v1.0.1 为 23 项通过；v1.0.2 晚间维护新增粗采样和多圈角度覆盖，共 25 项测试。
 - `node --check`：计算核心、交互脚本和本地服务器语法检查通过。
 - 两种逆解分支在多组可达半径和方向上完成正运动学回代验证。
 - 端点可达但中间穿过内圈的路径，即使采用极粗采样也会被拒绝。
@@ -15,6 +15,7 @@
 - 源码已发布至公开仓库 [fcship625/armpath-lite](https://github.com/fcship625/armpath-lite)，GitHub 已识别 MIT 许可证。
 - GitHub Actions 的 Node.js 22 / 24 测试均通过：[首次远程验证记录](https://github.com/fcship625/armpath-lite/actions/runs/39663348748)。
 - v1.0.1 的实际改动与复核范围详见 [2026-10-22 维护记录](maintenance/2026-10-22.md)。
+- v1.0.2 的边界问题复现与修复见 [2026-10-22 晚间维护记录](maintenance/2026-10-22-evening.md)。
 
 ## 尚未验证
 
