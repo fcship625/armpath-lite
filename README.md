@@ -100,7 +100,7 @@ Node.js 22+，无第三方依赖：
 npm test
 ```
 
-也可直接执行 `node tests/run.cjs`。测试覆盖正逆解回代、两种分支、边界与退化、整段盲区检查、连续奇异性检查、采样与角度展开、CSV、工程验证，以及界面事件逻辑。界面逻辑测试使用轻量 DOM 替身，**不验证真实浏览器布局**。GitHub Actions 已配置 Node.js 22 / 24 测试任务。
+也可直接执行 `node tests/run.cjs`。23 项测试覆盖正逆解回代、两种分支、边界与退化、整段盲区检查、连续奇异性检查、采样与角度展开、CSV、工程验证、界面事件逻辑，以及本地预览服务器的真实 HTTP 请求。服务器测试仅监听临时的本机端口，不访问外部网站。界面逻辑测试使用轻量 DOM 替身，**不验证真实浏览器布局**。GitHub Actions 已配置 Node.js 22 / 24 测试任务。
 
 ```text
 index.html                 页面入口，可直接打开
@@ -133,6 +133,8 @@ if (trajectory.valid) console.log(toCSV(trajectory, config));
 参见 [GitHub 发布指南](docs/PUBLISH.zh-CN.md) 与 [贡献指南](CONTRIBUTING.md)。这是静态项目，可直接使用 GitHub Pages 展示，部署不需要构建。
 
 后续可贡献的独立小功能：关节限位、速度曲线、路点排序、英文界面。当前版本有意保持轻量。
+
+最新维护：[2026-10-22 维护记录](docs/maintenance/2026-10-22.md)；版本变化见 [CHANGELOG](CHANGELOG.md)。
 
 ## 来源与许可证
 

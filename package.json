@@ -1,6 +1,6 @@
 {
   "name": "armpath-lite",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "A dependency-free planar 2R robot arm path checker and kinematics playground.",
   "license": "MIT",
