@@ -4,7 +4,7 @@
   const K = window.ArmPath, $ = id => document.getElementById(id);
   const initial = () => ({ schemaVersion: 1, l1: 140, l2: 100, branch: 1, speed: 60, step: 2,
     target: { x: 145, y: 95 }, waypoints: [{ x: 100, y: 45 }, { x: 170, y: 45 }, { x: 170, y: 115 }, { x: 100, y: 115 }, { x: 100, y: 45 }] });
-  let state = initial(), result = null, playing = false, frame = 0, playbackTime = 0, previousFrame = null, dragging = false;
+  let state = initial(), result = null, playing = false, frame = 0, playbackTime = 0, previousFrame = null, activePointerId = null;
   let noticeTimer, importGeneration = 0;
   const fmt = (v, n = 1) => Number(v).toFixed(n);
   const reasonText = { inside: '穿过内侧不可达盲区', outside: '超出最大可达半径', origin: '穿过等长机械臂的原点，逆解不唯一' };
@@ -130,20 +130,28 @@
       state[key] = Number($(key).value); replan();
     });
   }
-  for (const axis of ['x', 'y']) $('target-' + axis).addEventListener('change', () => {
-    const input = $('target-' + axis);
-    if (!input.checkValidity() || input.value === '') { input.reportValidity(); targetToInputs(); return; }
-    stop(); state.target[axis] = Number(input.value); draw();
-  });
+  for (const axis of ['x', 'y']) {
+    $('target-' + axis).addEventListener('focus', stop);
+    $('target-' + axis).addEventListener('change', () => {
+      const input = $('target-' + axis);
+      if (!input.checkValidity() || input.value === '') { input.reportValidity(); targetToInputs(); return; }
+      stop(); state.target[axis] = Number(input.value); draw();
+    });
+  }
   function selectPointer(event) {
     const matrix = $('stage').getScreenCTM(); if (!matrix) return;
     const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
     stop(); state.target = { x: Math.max(-650, Math.min(650, p.x)), y: Math.max(-650, Math.min(650, -p.y)) };
     targetToInputs(); draw();
   }
-  $('stage').addEventListener('pointerdown', e => { if (e.button !== 0) return; dragging = true; $('stage').setPointerCapture(e.pointerId); selectPointer(e); });
-  $('stage').addEventListener('pointermove', e => { if (dragging) selectPointer(e); });
-  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) $('stage').addEventListener(type, () => { dragging = false; });
+  $('stage').addEventListener('pointerdown', e => {
+    if (e.button !== 0 || activePointerId !== null) return;
+    activePointerId = e.pointerId; $('stage').setPointerCapture(e.pointerId); selectPointer(e);
+  });
+  $('stage').addEventListener('pointermove', e => { if (activePointerId !== null && e.pointerId === activePointerId) selectPointer(e); });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) $('stage').addEventListener(type, e => {
+    if (e.pointerId === activePointerId) activePointerId = null;
+  });
   $('add-point').addEventListener('click', () => {
     if ($('add-point').disabled) return;
     // Keep the full coordinate precision so displayed boundary targets stay reachable.

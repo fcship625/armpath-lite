@@ -74,9 +74,28 @@ test('unreachable target cannot be appended; clear/add/undo update the route', a
 test('pointer target coordinates have +Y up and equivalent text controls', async () => {
   const { $ } = launch();
   await $('stage').emit('pointerdown', { button: 0, pointerId: 1, clientX: 120, clientY: -80 });
-  await $('stage').emit('pointerup');
+  await $('stage').emit('pointerup', { pointerId: 1 });
   assert.equal(Number($('target-x').value), 120); assert.equal(Number($('target-y').value), 80);
   assert.equal($('add-point').disabled, false);
+});
+test('a drag ignores other pointers and ends only for its own pointer', async () => {
+  for (const endEvent of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+    const { $ } = launch(), stage = $('stage');
+    const target = () => [Number($('target-x').value), Number($('target-y').value)];
+    await stage.emit('pointerdown', { button: 0, pointerId: 1, clientX: 120, clientY: -80 });
+    await stage.emit('pointerdown', { button: 0, pointerId: 2, clientX: 200, clientY: -10 });
+    assert.deepEqual(target(), [120, 80], endEvent + ': extra contact');
+    await stage.emit('pointermove', { pointerId: 2, clientX: 210, clientY: -20 });
+    assert.deepEqual(target(), [120, 80], endEvent + ': unrelated move');
+    await stage.emit(endEvent, { pointerId: 2 });
+    await stage.emit('pointermove', { pointerId: 1, clientX: 130, clientY: -70 });
+    assert.deepEqual(target(), [130, 70], endEvent + ': original drag continues');
+    await stage.emit(endEvent, { pointerId: 1 });
+    await stage.emit('pointermove', { pointerId: 1, clientX: 140, clientY: -60 });
+    assert.deepEqual(target(), [130, 70], endEvent + ': drag has ended');
+    await stage.emit('pointerdown', { button: 0, pointerId: 3, clientX: 150, clientY: -50 });
+    assert.deepEqual(target(), [150, 50], endEvent + ': next drag starts');
+  }
 });
 test('playback, scrubbing, pause and visibility changes work', async () => {
   const { $, frame, document } = launch();
@@ -89,6 +108,22 @@ test('playback, scrubbing, pause and visibility changes work', async () => {
   assert.equal(Number($('target-x').value), 100); assert.equal(Number($('target-y').value), 45);
   await $('play').emit('click'); frame(2000);
   assert.equal($('play-time').textContent, '0.00 s');
+});
+test('focusing either target input pauses playback and preserves uncommitted typing', async () => {
+  for (const axis of ['x', 'y']) {
+    const { $, frame } = launch(), input = $('target-' + axis);
+    await $('play').emit('click'); frame(0); frame(1000);
+    const pose = $('stage').innerHTML;
+    await input.emit('focus');
+    assert.equal($('play').textContent, '▶ 回放轨迹');
+    input.value = axis === 'x' ? '200' : '80';
+    frame(1100);
+    assert.equal(input.value, axis === 'x' ? '200' : '80');
+    assert.equal($('play-time').textContent, '1.00 s');
+    assert.equal($('stage').innerHTML, pose);
+    await input.emit('change');
+    assert.match($('stage').innerHTML, axis === 'x' ? /目标 X 200.0 mm/ : /Y 80.0 mm/);
+  }
 });
 test('CSV and JSON downloads contain computed data and round-trip through import', async () => {
   const { $, downloads } = launch();
